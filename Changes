@@ -17,3 +17,9 @@ Revision history for Perl extension Tie::DNS
 	- Ability to set default field on a per-record type basis
 	- Simple dynamic updates
 	- Choose 'search' or 'query' lookups.
+
+0.41 Tue Jun 26 17:45:40 CDT 2001
+	- Missed a silly, simple bug in the constructor.  Fixed it.
+	- Fixed badly formatted POD
+	- Added POD section for 'all_fields' option.
+

@@ -1,4 +1,4 @@
-package Tie::DNS;  $VERSION = '0.4';
+package Tie::DNS;  $VERSION = '0.41';
 use Carp;
 use strict;
 use Net::DNS;
@@ -62,7 +62,9 @@ TIEHASH {
 	my $class = shift;
 	my $args = shift;
 
-	die "Bad argument format" unless(ref($args) eq 'HASH');
+	if(defined($args)) {
+		die "Bad argument format" unless(ref($args) eq 'HASH');
+	}
 
 	my $self = {};
 	bless $self, $class;
@@ -326,13 +328,13 @@ This document describes version 0.1 of Tie::DNS, released June 8, 2001
 
 =head1 SYNOPSIS
 
-use Tie::DNS;
+  use Tie::DNS;
 
-tie(%dns, 'Tie::DNS');
+  tie(%dns, 'Tie::DNS');
 
-print $dns{'foo.bar.com'}, "\n";
+  print $dns{'foo.bar.com'}, "\n";
 
-print $dns{'208.180.41.1'}, "\n";
+  print $dns{'208.180.41.1'}, "\n";
 
 =head1 DESCRIPTION 
 
@@ -352,11 +354,11 @@ See Above.
 Get all of the A records from 'foo.com'.  (Sorry foo.com if
 everyone hits your name server testing this module.  :-)
 
-tie (%dns, 'Tie::DNS', {'Domain' => 'foo.com'});
+  tie (%dns, 'Tie::DNS', {'Domain' => 'foo.com'});
 
-while (($name, $ip) = each %dns) {
+  while (($name, $ip) = each %dns) {
         print "$name = $ip\n";
-}
+  }
 
 This obviously requires that your host has zone transfer
 privileges with a name server hosting that zone.  The
@@ -370,12 +372,12 @@ Pass the configuration parameter of 'multiple' to any Perl true
 value, and all FETCH values from Tie::DNS will be an array
 reference of records.
 
-tie (%dns, 'Tie::DNS', {'multiple' => 'true'});
+  tie (%dns, 'Tie::DNS', {'multiple' => 'true'});
 
-my $ip_ref = $dns{'cnn.com'};
-foreach (@{$ip_ref}) {
+  my $ip_ref = $dns{'cnn.com'};
+  foreach (@{$ip_ref}) {
 	print "Address: $_\n";
-}
+  }
 
 
 =head2 Fetching records of type besides 'A'
@@ -384,49 +386,55 @@ Pass the configuration parameter of 'type' to one of the
 Net::DNS supported record types causes all FETCHes to
 get records of that type.
 
-tie (%dns, 'Tie::DNS', {	'multiple' => 'true',
+  tie (%dns, 'Tie::DNS', {	'multiple' => 'true',
 				'type' => 'SOA'});
 
-my $ip_ref = $dns{'cnn.com'};
-foreach (@{$ip_ref}) {
+  my $ip_ref = $dns{'cnn.com'};
+  foreach (@{$ip_ref}) {
 	print "primary nameserver: $_\n";
-}
+  }
 
 Here are the most popular types supported:
 
-CNAME - Returns the records canonical name.
-A - Returns the records address field.
-TXT - Returns the descriptive text.
-MX - Returns name of this mail exchange.
-NS - Returns the domain name of the nameserver.
-PTR - Returns the domain name associated with this record.
-SOA - Returns the domain name of the original or
+  CNAME - Returns the records canonical name.
+  A - Returns the records address field.
+  TXT - Returns the descriptive text.
+  MX - Returns name of this mail exchange.
+  NS - Returns the domain name of the nameserver.
+  PTR - Returns the domain name associated with this record.
+  SOA - Returns the domain name of the original or
       nameserver for this zone.
 
-(The descriptions are right out of the Net::DNS POD.)
+  (The descriptions are right out of the Net::DNS POD.)
 
 See Net::DNS documentation for further information about these
 types and a comprehensive list of all available types.
 
 =head2 Fetching all of the fields associated with a given record type.
 
-tie (%dns, 'Tie::DNS', {'type' => 'SOA'});
+  tie (%dns, 'Tie::DNS', {'type' => 'SOA'});
 
-my $dns_ref = $dns{'cnn.com'};
-foreach my $field (keys %{$dns_ref}) {
+  my $dns_ref = $dns{'cnn.com'};
+  foreach my $field (keys %{$dns_ref}) {
 	print "$field = " . ${$dns_ref}{$field} . "\n";
-}
+  }
 
 This code fragment will print all of the SOA fields associated
 with cnn.com.
 
+=head2 Getting all/different fields associated with a record
+
+  tie (%dns, 'Tie::DNS', {'all_fields' => 'true'});
+  my $dns_ref = $dns{'cnn.com'};
+  print $dns_ref->{'ttl'}, "\n";
+
 =head2 Changing various arguments to the tie on the fly
 
-tie (%dns, 'Tie::DNS', {'type' => 'SOA'});
-print $dns{'cnn.com'} . "\n";
+  tie (%dns, 'Tie::DNS', {'type' => 'SOA'});
+  print $dns{'cnn.com'} . "\n";
 
-tied(%dns)->args({'type' => 'A'});
-print $dns{'cnn.com'} . "\n";
+  tied(%dns)->args({'type' => 'A'});
+  print $dns{'cnn.com'} . "\n";
 
 This code fragment first does an SOA query for cnn.com, and then
 changes the default mode to A queries, and displays that.
@@ -436,15 +444,15 @@ changes the default mode to A queries, and displays that.
 Assign into the hash, key DNS name, value IP address, to add a record
 to the zone in the domain argument.  For instance:
 
-tie (%dns, 'Tie::DNS', {
+  tie (%dns, 'Tie::DNS', {
 		'domain' => 'realms.lan',
 		'multiple' => 'true'});
 
-$dns{'food.realms.lan.'} = '131.22.40.1';
+  $dns{'food.realms.lan.'} = '131.22.40.1';
 
-foreach (@{$dns{'food'}}) {
+  foreach (@{$dns{'food'}}) {
         print " $_\n";
-}
+  }
 
 =head1 TODO
 
