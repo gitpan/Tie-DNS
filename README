@@ -1,0 +1,64 @@
+==============================================================================
+		Release of version 0.4 of Tie::DNS
+==============================================================================
+
+NAME
+    Tie::DNS - Tied interface to Net::DNS
+
+DESCRIPTION
+    tie (%dns, 'Tie::DNS');
+
+    #do some simple DNS lookups
+    print $dns{'www.cnn.com'}, "\n";
+
+    print $dns{'208.180.41.1'}, "\n";
+
+    #do a zone transfer and see all A records in foo.com
+    tie (%dns, 'Tie::DNS', {'Domain' => 'foo.com'});
+
+    while (($name, $ip) = each %dns) {
+        print "$name = $ip\n";
+    }
+
+    This module is meant to be a simplified interface to the 
+    excellent Net::DNS module.  Its goal is to make operations
+    that are easy in Net::DNS trivial, and operations that are
+    hard in Net::DNS easy.  
+
+    This release also supports:
+
+        The ability to access all of the different types of DNS records
+
+	The ability to access all of the fields for each type of DNS record
+
+        Access to multiple records per query
+
+	Ability to change lookup parameters in the same DNS hash on the fly
+
+        Dynamic updates using writes to the hash
+
+    Future point releases will support:
+
+        Application level caching of names
+    
+	Secure DNS updates
+
+        Much more
+
+AUTHOR
+    Dana M. Diederich (dana@realms.org)
+
+COPYRIGHT
+    Copyright (c) 2001, Dana M. Diederich. All Rights Reserved. This module
+    is free software. It may be used, redistributed and/or modified under
+    the terms of the Perl Artistic License (see
+    http://www.perl.com/perl/misc/Artistic.html)
+
+==============================================================================
+
+AVAILABILITY
+
+Tie::DNS has been uploaded to the CPAN.
+
+==============================================================================
+
