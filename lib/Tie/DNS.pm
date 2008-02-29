@@ -1,6 +1,8 @@
-package Tie::DNS;  $VERSION = '0.41';
+package Tie::DNS;
+our $VERSION = '0.5';
 use Carp;
 use strict;
+use warnings;
 use Net::DNS;
 
 my %config_rec_defaults = (
@@ -71,7 +73,6 @@ TIEHASH {
 	$self->{'dns'} = new Net::DNS::Resolver;
 
 	$self->args($args);
-
 
 	return ($self);
 }
@@ -159,13 +160,13 @@ NEXTKEY {
 sub
 CLEAR {
 	my $self = shift;
-	die ("dynamic DNS updates are not yet available.");
+#	die ("dynamic DNS updates are not yet available.");
 }
 
 sub
 DELETE {
 	my $self = shift;
-	die ("dynamic DNS updates are not yet available.");
+	die ('Tie::DNS: DELETE function not implemented');
 }
 
 sub
@@ -208,6 +209,16 @@ process_args {
 	} else {
 		$self->{'ttl'} = 86400;
 	}
+
+	if (my $cache_param = $self->get_arg('cache')) {
+		eval 'require Tie::Cache';
+		unless ($@) {
+			tie my %cache, 'Tie::Cache', $cache_param;
+			$self->{'cache'} = \%cache;
+		}
+	} else {
+		delete $self->{'cache'};
+	}
 }
 
 
@@ -231,8 +242,7 @@ get_arg {
 	my $arg_name = shift;
 	return(undef) unless(defined($self->{'args'}));
 
-	my %args = %{$self->{'args'}};
-	return($args{$arg_name});
+	return $self->{'args'}{$arg_name};
 }
 
 sub
@@ -280,11 +290,25 @@ lookup_to_thing {
 	my $self = shift;
 	my $lookup = shift;
 
+	my $ttl = 0;
+	my $now = time();
+	my $cache = $self->{cache};
+
+	if ($cache and my $old = $cache->{$lookup}) {
+		my ($expire, $ret) = @$old;
+		if ($now > $expire) {
+			delete $cache->{$lookup};
+		} else {
+			return @$ret;
+		}
+	}
+
 	my $query = $self->{'dns'}->search($lookup, $self->{'lookup_type'});
 
 	my @retvals;
 	if($query) {
 		foreach my $rr ($query->answer) {
+			$ttl ||= $rr->{ttl};
 			next unless($rr->type eq $self->{'lookup_type'});
 			if(defined($self->get_arg('all_fields'))) {
 				my %fields;
@@ -306,6 +330,10 @@ lookup_to_thing {
 	} else {
 		$self->{'errstring'} = $self->{'dns'}->errorstring;
 	}
+
+	if ($cache) {
+		$cache->{$lookup} = [ $now + $ttl, \@retvals ];
+	}
 	@retvals;
 }
 #$self->get_arg('all_fields')
@@ -324,24 +352,24 @@ Tie::DNS - Tie interface to Net::DNS
 
 =head1 VERSION
 
-This document describes version 0.1 of Tie::DNS, released June 8, 2001
+This document describes version 0.5 of Tie::DNS, released February 28, 2008
 
 =head1 SYNOPSIS
 
   use Tie::DNS;
 
-  tie(%dns, 'Tie::DNS');
+  tie(my %dns, 'Tie::DNS');
 
-  print $dns{'foo.bar.com'}, "\n";
+  print "$dns{'foo.bar.com'}\n";
 
-  print $dns{'208.180.41.1'}, "\n";
+  print "$dns{'208.180.41.1'}\n";
 
 =head1 DESCRIPTION 
 
 Net::DNS is a very complete, extensive and well-written module.  
-It's also hard to use in many common cases.  Tie::DNS is ment to 
-make common DNS operations trivial, and more complex DNS 
-operations easier.
+It's completeness, however, makes many comman cases uses a bit
+wordy, code-wise.  Tie::DNS is meant to make common DNS operations
+trivial, and more complex DNS operations easier.
 
 =head1 EXAMPLES
 
@@ -356,7 +384,7 @@ everyone hits your name server testing this module.  :-)
 
   tie (%dns, 'Tie::DNS', {'Domain' => 'foo.com'});
 
-  while (($name, $ip) = each %dns) {
+  while (my ($name, $ip) = each %dns) {
         print "$name = $ip\n";
   }
 
@@ -372,7 +400,7 @@ Pass the configuration parameter of 'multiple' to any Perl true
 value, and all FETCH values from Tie::DNS will be an array
 reference of records.
 
-  tie (%dns, 'Tie::DNS', {'multiple' => 'true'});
+  tie (my %dns, 'Tie::DNS', {'multiple' => 'true'});
 
   my $ip_ref = $dns{'cnn.com'};
   foreach (@{$ip_ref}) {
@@ -422,6 +450,17 @@ types and a comprehensive list of all available types.
 This code fragment will print all of the SOA fields associated
 with cnn.com.
 
+=head2 Caching
+
+The argument 'cache' will cause the DNS results to be cached.  The default
+is no caching.  The 'cache' argument is passed through to L<Tie::Cache>.
+If L<Tie::Cache> cannot be loaded, caching will be disabled.  Entries
+whose DNS TTL has expired will be re-queried automatically.
+
+  tie (%dns, 'Tie::DNS', { cache => 100 });
+  print "$dns{'cnn.com'}\n";
+  print "$dns{'cnn.com'}\n";  ## cached!
+
 =head2 Getting all/different fields associated with a record
 
   tie (%dns, 'Tie::DNS', {'all_fields' => 'true'});
@@ -456,10 +495,8 @@ to the zone in the domain argument.  For instance:
 
 =head1 TODO
 
-This .4 release supports the basic functionality of 
+This .5 release supports the basic functionality of 
 Net::DNS.  The 1.0 release will support the following:
-
-Very likely some application level caching options.
 
 Different access methods for forward and reverse lookups.
 
@@ -468,6 +505,10 @@ The 2.0 release will strive to support DNS security options.
 =head1 AUTHOR
 
 Dana M. Diederich <dana@realms.org>
+
+=head1 ACKNOWLEDGMENTS
+
+kevin brintnall <kbrint@rufus.net> for Caching patch
 
 =head1 BUGS
 
@@ -479,7 +520,7 @@ Patches, flames, opinions, enhancement ideas are all welcome.
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001, Dana M. Diederich. All Rights Reserved.
+Copyright (c) 2008, Dana M. Diederich. All Rights Reserved.
 This module is free software. It may be used, redistributed
 and/or modified under the terms of the Perl Artistic License
   (see http://www.perl.com/perl/misc/Artistic.html)

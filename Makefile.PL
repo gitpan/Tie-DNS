@@ -8,6 +8,7 @@ WriteMakefile(
 		'dist'		=>	{ COMPRESS => 'gzip', SUFFIX => 'gz' },
 		'PREREQ_PM'	=>	{
 						Net::DNS	=>	0.12,
+						Test::More	=>	0.01,
 					},
              );
 

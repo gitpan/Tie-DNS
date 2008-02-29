@@ -23,3 +23,6 @@ Revision history for Perl extension Tie::DNS
 	- Fixed badly formatted POD
 	- Added POD section for 'all_fields' option.
 
+0.5 Thu Feb 28 18:11:30 CST 2008
+	- Added caching patch courtesy of kevin brintnall <kbrint@rufus.net>
+	- Brought testing into the 20th century.  :-)
