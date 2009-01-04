@@ -1,346 +1,358 @@
 package Tie::DNS;
-our $VERSION = '0.5';
 use Carp;
 use strict;
 use warnings;
 use Net::DNS;
 
+our $VERSION = '0.6';
+
 my %config_rec_defaults = (
-	'AAAA'	=>	'address',
-	'AFSDB'	=>	'subtype',
-	'A'	=>	'address',
-	'CNAME'	=>	'cname',
-	'EID'	=>	'rdlength',
-	'HINFO'	=>	'cpu',
-	'ISDN'	=>	'address',
-	'LOC'	=>	'version',
-	'MB'	=>	'madname',
-	'MG'	=>	'mgmname',
-	'MINFO'	=>	'rmailbx',
-	'MR'	=>	'newname',
-	'MX'	=>	'exchange',
-	'NAPTR'	=>	'order',
-	'NIMLOC'	=>	'rdlength',
-	'NSAP'	=>	'idp',
-	'NS'	=>	'nsdname',
-	'NULL'	=>	'rdlength',
-	'PTR'	=>	'ptrdname',
-	'PX'	=>	'preference',
-	'RP'	=>	'mbox',
-	'RT'	=>	'intermediate',
-	'SOA'	=>	'mname',
-	'SRV'	=>	'target',
-	'TXT'	=>	'txtdata');
+    'AAAA'   => 'address',
+    'AFSDB'  => 'subtype',
+    'A'      => 'address',
+    'CNAME'  => 'cname',
+    'EID'    => 'rdlength',
+    'HINFO'  => 'cpu',
+    'ISDN'   => 'address',
+    'LOC'    => 'version',
+    'MB'     => 'madname',
+    'MG'     => 'mgmname',
+    'MINFO'  => 'rmailbx',
+    'MR'     => 'newname',
+    'MX'     => 'exchange',
+    'NAPTR'  => 'order',
+    'NIMLOC' => 'rdlength',
+    'NSAP'   => 'idp',
+    'NS'     => 'nsdname',
+    'NULL'   => 'rdlength',
+    'PTR'    => 'ptrdname',
+    'PX'     => 'preference',
+    'RP'     => 'mbox',
+    'RT'     => 'intermediate',
+    'SOA'    => 'mname',
+    'SRV'    => 'target',
+    'TXT'    => 'txtdata'
+);
 
 my %config_type = (
-	'AAAA'	=>	['address', 'ttl'],
-	'AFSDB'	=>	['subtype', 'ttl'],
-	'A'	=>	['address', 'ttl'],
-	'CNAME'	=>	['cname', 'ttl'],
-	'EID'	=>	['rdlength', 'rdata', 'ttl'],
-	'HINFO'	=>	['cpu', 'os', 'ttl'],
-	'ISDN'	=>	['address', 'subaddress', 'ttl'],
-	'LOC'	=>	['version', 'size', 'horiz_pre', 'vert_pre', 'latitude', 'longitude', 'latlon', 'altitude', 'ttl'],
-	'MB'	=>	['madname', 'ttl'],
-	'MG'	=>	['mgmname', 'ttl'],
-	'MINFO'	=>	['rmailbx', 'emailbx', 'ttl'],
-	'MR'	=>	['newname', 'ttl'],
-	'MX'	=>	['exchange', 'preference'],
-	'NAPTR'	=>	['order', 'preference', 'flags', 'service', 'regexp', 'replacement', 'ttl'],
-	'NIMLOC'	=>	['rdlength', 'rdata', 'ttl'],
-	'NSAP'	=>	['idp', 'dsp', 'afi', 'idi', 'dfi', 'aa', 'rsvd', 'rd', 'area', 'id', 'sel', 'ttl'],
-	'NS'	=>	['nsdname', 'ttl'],
-	'NULL'	=>	['rdlength', 'rdata', 'ttl'],
-	'PTR'	=>	['ptrdname', 'ttl'],
-	'PX'	=>	['preference', 'map822', 'mapx400', 'ttl'],
-	'RP'	=>	['mbox', 'txtdname','ttl'],
-	'RT'	=>	['intermediate', 'preference', 'ttl'],
-	'SOA'	=>	['mname', 'rname', 'serial', 'refresh', 'retry', 'expire', 'minimum', 'ttl'],
-	'SRV'	=>	['target', 'port', 'weight', 'priority', 'ttl'],
-	'TXT'	=>	['txtdata', 'ttl']);
+    'AAAA'  => [ 'address',  'ttl' ],
+    'AFSDB' => [ 'subtype',  'ttl' ],
+    'A'     => [ 'address',  'ttl' ],
+    'CNAME' => [ 'cname',    'ttl' ],
+    'EID'   => [ 'rdlength', 'rdata', 'ttl' ],
+    'HINFO' => [ 'cpu',      'os', 'ttl' ],
+    'ISDN'  => [ 'address',  'subaddress', 'ttl' ],
+    'LOC' => [
+        'version',  'size',      'horiz_pre', 'vert_pre',
+        'latitude', 'longitude', 'latlon',    'altitude',
+        'ttl'
+    ],
+    'MB'    => [ 'madname',  'ttl' ],
+    'MG'    => [ 'mgmname',  'ttl' ],
+    'MINFO' => [ 'rmailbx',  'emailbx', 'ttl' ],
+    'MR'    => [ 'newname',  'ttl' ],
+    'MX'    => [ 'exchange', 'preference' ],
+    'NAPTR' => [
+        'order',  'preference',  'flags', 'service',
+        'regexp', 'replacement', 'ttl'
+    ],
+    'NIMLOC' => [ 'rdlength', 'rdata', 'ttl' ],
+    'NSAP'   => [
+        'idp',  'dsp', 'afi',  'idi', 'dfi', 'aa',
+        'rsvd', 'rd',  'area', 'id',  'sel', 'ttl'
+    ],
+    'NS'   => [ 'nsdname',    'ttl' ],
+    'NULL' => [ 'rdlength',   'rdata', 'ttl' ],
+    'PTR'  => [ 'ptrdname',   'ttl' ],
+    'PX'   => [ 'preference', 'map822', 'mapx400', 'ttl' ],
+    'RP'  => [ 'mbox',         'txtdname',   'ttl' ],
+    'RT'  => [ 'intermediate', 'preference', 'ttl' ],
+    'SOA' => [
+        'mname', 'rname',  'serial',  'refresh',
+        'retry', 'expire', 'minimum', 'ttl'
+    ],
+    'SRV' => [ 'target',  'port', 'weight', 'priority', 'ttl' ],
+    'TXT' => [ 'txtdata', 'ttl' ]
+);
 
-sub
-TIEHASH {
-	my $class = shift;
-	my $args = shift;
+sub TIEHASH {
+    my $class = shift;
+    my $args  = shift;
 
-	if(defined($args)) {
-		die "Bad argument format" unless(ref($args) eq 'HASH');
-	}
+    if ( defined($args) ) {
+        die "Bad argument format" unless ( ref($args) eq 'HASH' );
+    }
 
-	my $self = {};
-	bless $self, $class;
-	$self->{'dns'} = new Net::DNS::Resolver;
+    my $self = {};
+    bless $self, $class;
+    $self->{'dns'} = new Net::DNS::Resolver;
 
-	$self->args($args);
+    $self->args($args);
 
-	return ($self);
+    return ($self);
 }
 
-sub
-STORE {	#Dynamic update.  Oh my.  :-)
-	my $self = shift;
-	my $key = shift;
-	my $value = shift;
+sub STORE {    #Dynamic update.  Oh my.  :-)
+    my $self  = shift;
+    my $key   = shift;
+    my $value = shift;
 
-	my $root_server = $self->get_root_server || 
-		die("Dynamic update attempted but no (or bad) domain specified.");
+    my $root_server = $self->get_root_server
+      || die("Dynamic update attempted but no (or bad) domain specified.");
 
-	my $update = new Net::DNS::Update($self->get_arg('domain'));
-	my $update_string = sprintf('%s. %s %s %s', 
-		$key, $self->{'ttl'}, $self->{'lookup_type'}, $value);
-	$update->push('update', rr_add($update_string));
+    my $update        = new Net::DNS::Update( $self->_get_arg('domain') );
+    my $update_string = sprintf( '%s. %s %s %s',
+        $key, $self->{'ttl'}, $self->{'lookup_type'}, $value );
+    $update->push( 'update', rr_add($update_string) );
 
-	my $res = new Net::DNS::Resolver;
-	$res->nameservers($root_server);
-	my $reply = $res->send($update);
-	if(defined($reply)) {
-		if($reply->header->rcode eq 'NOERROR') {
-			return($value);
-		} else {
-			$self->{'errstring'} = $self->{'dns'}->errorstring;
-			return(undef);
-		}
-	} else {
-		$self->{'errstring'} = $self->{'dns'}->errorstring;
-		return(undef);
-	}
+    my $res = new Net::DNS::Resolver;
+    $res->nameservers($root_server);
+    my $reply = $res->send($update);
+    if ( defined($reply) ) {
+        if ( $reply->header->rcode eq 'NOERROR' ) {
+            return ($value);
+        }
+        else {
+            $self->{'errstring'} = $self->{'dns'}->errorstring;
+            return (undef);
+        }
+    }
+    else {
+        $self->{'errstring'} = $self->{'dns'}->errorstring;
+        return (undef);
+    }
 }
 
-sub
-args {
-	my $self = shift;
-	my $args = shift;
-	$self->{'args'} = $args;
-	$self->process_args;
+sub args {
+    my $self = shift;
+    my $args = shift;
+    $self->{'args'} = $args;
+    $self->_process_args;
 }
 
-sub
-FETCH {
-	my $self = shift;
-	my $lookup = shift;
+sub FETCH {
+    my $self   = shift;
+    my $lookup = shift;
 
-	if($lookup =~ /^\d+\.\d+\.\d+\.\d+$/) {
-		return($self->do_reverse_lookup($lookup));
-	} else {
-		return($self->do_forward_lookup($lookup));
-	}
+    if ( $lookup =~ /^\d+\.\d+\.\d+\.\d+$/ ) {
+        return ( $self->do_reverse_lookup($lookup) );
+    }
+    else {
+        return ( $self->do_forward_lookup($lookup) );
+    }
 }
 
-sub
-FIRSTKEY {
-	my $self = shift;
-	my @full_zone = $self->{'dns'}->axfr($self->{'root_name_server'});
-	if(scalar(@full_zone) == 0) {
-		$self->{'errstring'} = $self->{'dns'}->errorstring;
-		return(undef);
-	}
+sub FIRSTKEY {
+    my $self      = shift;
+    my @full_zone = $self->{'dns'}->axfr( $self->{'root_name_server'} );
+    if ( scalar(@full_zone) == 0 ) {
+        $self->{'errstring'} = $self->{'dns'}->errorstring;
+        return (undef);
+    }
 
-	my @zone;
-	foreach my $rr (@full_zone) {
-		push(@zone, $rr) if($rr->type eq 'A');
-	}
-	my $rr = shift(@zone);
-	$self->{'zone'} = \@zone;
-	return($rr->name);
+    my @zone;
+    foreach my $rr (@full_zone) {
+        push( @zone, $rr ) if ( $rr->type eq 'A' );
+    }
+    my $rr = shift(@zone);
+    $self->{'zone'} = \@zone;
+    return ( $rr->name );
 }
 
-sub
-NEXTKEY {
-	my $self = shift;
-	my @zone = @{$self->{'zone'}};
-	if(scalar(@zone) == 0) {
-		return(undef);
-	}
-	my $rr = shift(@zone);
-	$self->{'zone'} = \@zone;
-	return($rr->name);
+sub NEXTKEY {
+    my $self = shift;
+    my @zone = @{ $self->{'zone'} };
+    if ( scalar(@zone) == 0 ) {
+        return (undef);
+    }
+    my $rr = shift(@zone);
+    $self->{'zone'} = \@zone;
+    return ( $rr->name );
 }
 
-sub
-CLEAR {
-	my $self = shift;
-#	die ("dynamic DNS updates are not yet available.");
+sub CLEAR {
+    my $self = shift;
+
+    #	die ("dynamic DNS updates are not yet available.");
 }
 
-sub
-DELETE {
-	my $self = shift;
-	die ('Tie::DNS: DELETE function not implemented');
+sub DELETE {
+    my $self = shift;
+    die('Tie::DNS: DELETE function not implemented');
 }
 
-sub
-DESTROY {
-	my $self = shift;
-	#There isn't any real Net::DNS requirement to call anything when
-	#we go bye-bye, so we'll just go bye-bye quietly.
+sub DESTROY {
+    my $self = shift;
+
+    #There isn't any real Net::DNS requirement to call anything when
+    #we go bye-bye, so we'll just go bye-bye quietly.
 }
 
-sub
-process_args {
-	my $self = shift;
+sub _process_args {
+    my $self = shift;
 
-	if(defined($self->get_arg('domain'))) {	#find the root name
-						#server for this domain
-		$self->{'root_name_server'} = $self->get_root_server;
-		$self->{'dns'}->nameservers($self->{'root_name_server'});
-	}
+    if ( defined( $self->_get_arg('domain') ) ) {    #find the root name
+                                                     #server for this domain
+        $self->{'root_name_server'} = $self->get_root_server;
+        $self->{'dns'}->nameservers( $self->{'root_name_server'} );
+    }
 
-	if(defined($self->get_arg('multiple'))) {	#multiple return
-							#objects
-		#I don't think there's any setup required for this.
-	}
+    if ( defined( $self->_get_arg('multiple') ) ) {    #multiple return
+            #objects
+            #I don't think there's any setup required for this.
+    }
 
-	if(defined($self->get_arg('all_fields'))) {	#all fields
-		#I don't think there's any setup for this one either.
-	}
+    if ( defined( $self->_get_arg('all_fields') ) ) {    #all fields
+            #I don't think there's any setup for this one either.
+    }
 
-	if(defined($self->get_arg('type'))) {
-		if(!defined($config_type{$self->get_arg('type')})) {
-			die('Bad record type: ' . $self->get_arg('type'));
-		}
-		$self->{'lookup_type'} = $self->get_arg('type');
-	} else {
-		$self->{'lookup_type'} = 'A';
-	}
+    if ( defined( $self->_get_arg('type') ) ) {
+        if ( !defined( $config_type{ $self->_get_arg('type') } ) ) {
+            die( 'Bad record type: ' . $self->_get_arg('type') );
+        }
+        $self->{'lookup_type'} = $self->_get_arg('type');
+    }
+    else {
+        $self->{'lookup_type'} = 'A';
+    }
 
-	if(defined($self->get_arg('ttl'))) {
-		$self->{'ttl'} = $self->get_arg('ttl');
-	} else {
-		$self->{'ttl'} = 86400;
-	}
+    if ( defined( $self->_get_arg('ttl') ) ) {
+        $self->{'ttl'} = $self->_get_arg('ttl');
+    }
+    else {
+        $self->{'ttl'} = 86400;
+    }
 
-	if (my $cache_param = $self->get_arg('cache')) {
-		eval 'require Tie::Cache';
-		unless ($@) {
-			tie my %cache, 'Tie::Cache', $cache_param;
-			$self->{'cache'} = \%cache;
-		}
-	} else {
-		delete $self->{'cache'};
-	}
+    if ( my $cache_param = $self->_get_arg('cache') ) {
+        eval { require Tie::Cache; };
+        unless ($@) {
+            tie my %cache, 'Tie::Cache', $cache_param;
+            $self->{cache} = \%cache;
+        }
+    }
+    else {
+        delete $self->{'cache'};
+    }
 }
 
-
-sub
-get_root_server {
-	my $self = shift;
-	my $query = $self->{'dns'}->query($self->get_arg('domain'), 'SOA');
-	if ($query) {
-		foreach my $rr ($query->answer) {
-			print "Root: $rr->mname\n";
-			return($rr->mname);
-		}
-	} else {
-		die 'Domain specified, but unable to get SOA record: ' . $self->{'dns'}->errorstring;
-	}
+sub get_root_server {
+    my $self = shift;
+    my $query = $self->{'dns'}->query( $self->_get_arg('domain'), 'SOA' );
+    if ($query) {
+        foreach my $rr ( $query->answer ) {
+            print "Root: $rr->mname\n";
+            return ( $rr->mname );
+        }
+    }
+    else {
+        die 'Domain specified, but unable to get SOA record: '
+          . $self->{'dns'}->errorstring;
+    }
 }
 
-sub
-get_arg {
-	my $self = shift;
-	my $arg_name = shift;
-	return(undef) unless(defined($self->{'args'}));
+sub _get_arg {
+    my $self     = shift;
+    my $arg_name = shift;
+    return (undef) unless ( defined( $self->{'args'} ) );
 
-	return $self->{'args'}{$arg_name};
+    return $self->{'args'}{$arg_name};
 }
 
-sub
-do_reverse_lookup {
-	my $self = shift;
-	my $lookup = shift;
+sub do_reverse_lookup {
+    my $self   = shift;
+    my $lookup = shift;
 
-	my $query = $self->{'dns'}->search($lookup);
-	my @retvals;
-	if($query) {
-		foreach my $rr ($query->answer) {
-			next unless $rr->type eq 'PTR';
-			push(@retvals, $rr->ptrdname);
-		}
-	} else {
-		$self->{'errstring'} = $self->{'dns'}->errorstring;
-		return(undef);
-	}
-	if(defined($self->get_arg('multiple'))) {
-		return(\@retvals);
-	} else {
-		return(shift(@retvals));
-	}
+    my $query = $self->{'dns'}->search($lookup);
+    my @retvals;
+    if ($query) {
+        foreach my $rr ( $query->answer ) {
+            next unless $rr->type eq 'PTR';
+            push( @retvals, $rr->ptrdname );
+        }
+    }
+    else {
+        $self->{'errstring'} = $self->{'dns'}->errorstring;
+        return (undef);
+    }
+    if ( defined( $self->_get_arg('multiple') ) ) {
+        return ( \@retvals );
+    }
+    else {
+        return ( shift(@retvals) );
+    }
 }
 
-sub
-do_forward_lookup {
-	my $self = shift;
-	my $lookup = shift;
-	my @things = $self->lookup_to_thing($lookup);
-	if(defined($self->get_arg('multiple'))) {
-		return(\@things);
-	} else {
-		return(shift(@things));
-	}
+sub do_forward_lookup {
+    my $self   = shift;
+    my $lookup = shift;
+    my @things = $self->_lookup_to_thing($lookup);
+    if ( defined( $self->_get_arg('multiple') ) ) {
+        return ( \@things );
+    }
+    else {
+        return ( shift(@things) );
+    }
 }
 
-sub
-ip_to_name {
-	my $self = shift;
+sub _lookup_to_thing {
+    my $self   = shift;
+    my $lookup = shift;
+
+    my $ttl   = 0;
+    my $now   = time();
+    my $cache = $self->{cache};
+
+    if ( $cache and my $old = $cache->{$lookup} ) {
+        my ( $expire, $ret ) = @$old;
+        if ( $now > $expire ) {
+            delete $cache->{$lookup};
+        }
+        else {
+            return @$ret;
+        }
+    }
+
+    my $query = $self->{'dns'}->search( $lookup, $self->{'lookup_type'} );
+
+    my @retvals;
+    if ($query) {
+        foreach my $rr ( $query->answer ) {
+            $ttl ||= $rr->{ttl};
+            next unless ( $rr->type eq $self->{'lookup_type'} );
+            if ( defined( $self->_get_arg('all_fields') ) ) {
+                my %fields;
+                foreach
+                  my $field ( @{ $config_type{ $self->{'lookup_type'} } } )
+                {
+                    $fields{$field} = $rr->{$field};
+                }
+                push( @retvals, \%fields );
+            }
+            else {
+                push(
+                    @retvals,
+                    $rr->{
+                        $config_rec_defaults{ $self->{'lookup_type'} }
+
+                          #					$config_type{$self->{'lookup_type'}}[0]
+                      }
+                );
+            }
+        }
+    }
+    else {
+        $self->{'errstring'} = $self->{'dns'}->errorstring;
+    }
+
+    if ($cache) {
+        $cache->{$lookup} = [ $now + $ttl, \@retvals ];
+    }
+    @retvals;
 }
 
-sub
-lookup_to_thing {
-	my $self = shift;
-	my $lookup = shift;
-
-	my $ttl = 0;
-	my $now = time();
-	my $cache = $self->{cache};
-
-	if ($cache and my $old = $cache->{$lookup}) {
-		my ($expire, $ret) = @$old;
-		if ($now > $expire) {
-			delete $cache->{$lookup};
-		} else {
-			return @$ret;
-		}
-	}
-
-	my $query = $self->{'dns'}->search($lookup, $self->{'lookup_type'});
-
-	my @retvals;
-	if($query) {
-		foreach my $rr ($query->answer) {
-			$ttl ||= $rr->{ttl};
-			next unless($rr->type eq $self->{'lookup_type'});
-			if(defined($self->get_arg('all_fields'))) {
-				my %fields;
-				foreach my $field (
-							@{$config_type{$self->{'lookup_type'}}}
-								) {
-					$fields{$field} = 
-							$rr->{$field};
-				}
-				push(@retvals, \%fields);
-			} else {
-				push(@retvals, 
-					$rr->{
-					$config_rec_defaults{$self->{'lookup_type'}}
-#					$config_type{$self->{'lookup_type'}}[0]
-					});
-			}
-		}
-	} else {
-		$self->{'errstring'} = $self->{'dns'}->errorstring;
-	}
-
-	if ($cache) {
-		$cache->{$lookup} = [ $now + $ttl, \@retvals ];
-	}
-	@retvals;
-}
-#$self->get_arg('all_fields')
-sub
-error {
-	my $self = shift;
-	return($self->{'errstring'});
+sub error {
+    my $self = shift;
+    return ( $self->{'errstring'} );
 }
 
 1;
@@ -493,9 +505,31 @@ to the zone in the domain argument.  For instance:
         print " $_\n";
   }
 
+=head2 Methods
+
+=head3 error
+
+Returns the last error, either from Tie::DNS or Net::DNS
+
+=head3 get_root_server
+
+Returns the root name server.
+
+=head3 do_forward_lookup
+
+Returns the results of a forward lookup.
+
+=head3 do_reverse_lookup
+
+Returns the results of a reverse lookup.
+
+=head3 args
+
+Change various arguments to the tie on the fly.
+
 =head1 TODO
 
-This .5 release supports the basic functionality of 
+This .6 release supports the basic functionality of 
 Net::DNS.  The 1.0 release will support the following:
 
 Different access methods for forward and reverse lookups.
@@ -512,15 +546,12 @@ kevin brintnall <kbrint@rufus.net> for Caching patch
 
 =head1 BUGS
 
-This project is very incomplete.  in-addr.arpa zone transfers aren't 
-yet supported.  This module ONLY supports named arguments, not
-positional.
+in-addr.arpa zone transfers aren't yet supported.
 
 Patches, flames, opinions, enhancement ideas are all welcome.
 
-=head1 COPYRIGHT
-
-Copyright (c) 2008, Dana M. Diederich. All Rights Reserved.
+=head1 COPYRIGHT 
+Copyright (c) 2009, Dana M. Diederich. All Rights Reserved.
 This module is free software. It may be used, redistributed
 and/or modified under the terms of the Perl Artistic License
   (see http://www.perl.com/perl/misc/Artistic.html)

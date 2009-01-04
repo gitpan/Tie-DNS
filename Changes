@@ -26,3 +26,7 @@ Revision history for Perl extension Tie::DNS
 0.5 Thu Feb 28 18:11:30 CST 2008
 	- Added caching patch courtesy of kevin brintnall <kbrint@rufus.net>
 	- Brought testing into the 20th century.  :-)
+
+0.6 Sat Jan  3 22:08:57 CST 2009
+	- Brought testing into the 21th century.  :-)
+	- Added dependency on Tie::Cache
