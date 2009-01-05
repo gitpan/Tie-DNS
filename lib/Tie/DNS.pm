@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Net::DNS;
 
-our $VERSION = '0.6';
+our $VERSION = '0.61';
 
 my %config_rec_defaults = (
     'AAAA'   => 'address',
@@ -529,7 +529,7 @@ Change various arguments to the tie on the fly.
 
 =head1 TODO
 
-This .6 release supports the basic functionality of 
+This 0.61 release supports the basic functionality of 
 Net::DNS.  The 1.0 release will support the following:
 
 Different access methods for forward and reverse lookups.

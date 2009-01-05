@@ -9,7 +9,7 @@ if ( not $ENV{TEST_AUTHOR} ) {
     plan( skip_all => $msg );
 }
 
-eval { use Test::Perl::Critic::Progressive; };
+eval { require Test::Perl::Critic::Progressive; };
 
 if ($EVAL_ERROR) {
     my $msg =

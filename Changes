@@ -30,3 +30,6 @@ Revision history for Perl extension Tie::DNS
 0.6 Sat Jan  3 22:08:57 CST 2009
 	- Brought testing into the 21th century.  :-)
 	- Added dependency on Tie::Cache
+
+0.61 Sun Jan  4 20:06:39 CST 2009
+	- Fixed a test bug
