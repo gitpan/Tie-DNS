@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Net::DNS;
 
-our $VERSION = '0.61';
+our $VERSION = '0.62';
 
 my %config_rec_defaults = (
     'AAAA'   => 'address',
@@ -82,10 +82,14 @@ sub TIEHASH {
     if ( defined($args) ) {
         die "Bad argument format" unless ( ref($args) eq 'HASH' );
     }
+    else {
+        $args = {};
+    }
 
     my $self = {};
     bless $self, $class;
-    $self->{'dns'} = new Net::DNS::Resolver;
+    
+    $self->{'dns'} = new Net::DNS::Resolver(%{ ($args->{resolver_args} || {}) });
 
     $self->args($args);
 
@@ -105,7 +109,7 @@ sub STORE {    #Dynamic update.  Oh my.  :-)
         $key, $self->{'ttl'}, $self->{'lookup_type'}, $value );
     $update->push( 'update', rr_add($update_string) );
 
-    my $res = new Net::DNS::Resolver;
+    my $res = new Net::DNS::Resolver(%{ ($self->args->{resolver_args} || {}) });
     $res->nameservers($root_server);
     my $reply = $res->send($update);
     if ( defined($reply) ) {
@@ -479,6 +483,15 @@ whose DNS TTL has expired will be re-queried automatically.
   my $dns_ref = $dns{'cnn.com'};
   print $dns_ref->{'ttl'}, "\n";
 
+=head2 Passing arguments to Net::DNS::Resolver->new()
+
+  tie my %from_localhost, "Tie::DNS", { resolver_args => { nameservers => ['127.0.0.1'] } };
+  print "$from_localhost{'test.local'}\n";
+
+You can pass arbitrary arguments to the Net::DNS::Resolver constructor by 
+setting the C<resolver_args> argument. In the example above, an alternative
+nameserver is used instead of the default one.
+
 =head2 Changing various arguments to the tie on the fly
 
   tie (%dns, 'Tie::DNS', {'type' => 'SOA'});
@@ -529,7 +542,7 @@ Change various arguments to the tie on the fly.
 
 =head1 TODO
 
-This 0.61 release supports the basic functionality of 
+This 0.62 release supports the basic functionality of 
 Net::DNS.  The 1.0 release will support the following:
 
 Different access methods for forward and reverse lookups.
@@ -542,7 +555,8 @@ Dana M. Diederich <dana@realms.org>
 
 =head1 ACKNOWLEDGMENTS
 
-kevin brintnall <kbrint@rufus.net> for Caching patch
+kevin Brintnall <kbrint@rufus.net> for Caching patch
+Alvar Freude <alvar@a-blast.org> for arguments to resolver patch
 
 =head1 BUGS
 
@@ -551,7 +565,7 @@ in-addr.arpa zone transfers aren't yet supported.
 Patches, flames, opinions, enhancement ideas are all welcome.
 
 =head1 COPYRIGHT 
-Copyright (c) 2009, Dana M. Diederich. All Rights Reserved.
+Copyright (c) 2009,2013 Dana M. Diederich. All Rights Reserved.
 This module is free software. It may be used, redistributed
 and/or modified under the terms of the Perl Artistic License
   (see http://www.perl.com/perl/misc/Artistic.html)
