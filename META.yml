@@ -1,8 +1,16 @@
 ---
 abstract: 'Tie interface to Net::DNS'
 author:
-  - 'Dana M. Diederich <diederich@realms.org>'
-build_requires: {}
+  - 'Dana M. Diederich <dana@realms.org>'
+build_requires:
+  English: 0
+  File::Spec: 0
+  Test: 0
+  Test::More: 0
+  Test::Perl::Critic: 0
+  Test::Perl::Critic::Progressive: 0
+  Test::PerlTidy: 0
+  lib: 0
 configure_requires:
   ExtUtils::MakeMaker: 6.30
 dynamic_config: 0
@@ -12,7 +20,13 @@ meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: 1.4
 name: Tie-DNS
+requires:
+  Carp: 0
+  Net::DNS: 0
+  Tie::Cache: 0
+  strict: 0
+  warnings: 0
 resources:
   homepage: https://metacpan.org/module/Tie::DNS
   repository: http://github.com/dana/perl-Tie-DNS.git
-version: 0.63
+version: 1.132260
