@@ -1,31 +1,63 @@
-use IO::Socket;
-use ExtUtils::MakeMaker;
 
-#Lifted from Net::DNS
-unlink 't/online.enabled';
-eval {
-    my $s = IO::Socket::INET->new(
-        PeerAddr => "www.google.com:80",
-        Timeout  => 10,
-    );
-    if ($s) {
-        close($s);
-        open( ENABLED, '>t/online.enabled' ) 
-          or die "Can't touch ./t/online.enabled: $!";
-        close(ENABLED) or die "Can't touch t/online.enabled: $!";
-    }
+use strict;
+use warnings;
 
-};
 
-WriteMakefile(
-    'NAME'         => 'Tie::DNS',
-    'VERSION_FROM' => 'lib/Tie/DNS.pm',
-    'AUTHOR'       => 'Dana M. Diederich <dana@realms.org>',
-    'ABSTRACT'     => 'Easy interface to Net::DNS',
-    'dist'         => { COMPRESS => 'gzip', SUFFIX => 'gz' },
-    'PREREQ_PM'    => {
-        Net::DNS   => 0.12,
-        Test::More => 0.01,
-        Tie::Cache => 0.01,
-    },
+
+use ExtUtils::MakeMaker 6.30;
+
+
+
+my %WriteMakefileArgs = (
+  "ABSTRACT" => "Tie interface to Net::DNS",
+  "AUTHOR" => "Dana M. Diederich <diederich\@realms.org>",
+  "BUILD_REQUIRES" => {},
+  "CONFIGURE_REQUIRES" => {
+    "ExtUtils::MakeMaker" => "6.30"
+  },
+  "DISTNAME" => "Tie-DNS",
+  "EXE_FILES" => [],
+  "LICENSE" => "perl",
+  "NAME" => "Tie::DNS",
+  "PREREQ_PM" => {},
+  "TEST_REQUIRES" => {},
+  "VERSION" => "0.63",
+  "test" => {
+    "TESTS" => "t/*.t"
+  }
 );
+
+
+unless ( eval { ExtUtils::MakeMaker->VERSION(6.63_03) } ) {
+  my $tr = delete $WriteMakefileArgs{TEST_REQUIRES};
+  my $br = $WriteMakefileArgs{BUILD_REQUIRES};
+  for my $mod ( keys %$tr ) {
+    if ( exists $br->{$mod} ) {
+      $br->{$mod} = $tr->{$mod} if $tr->{$mod} > $br->{$mod};
+    }
+    else {
+      $br->{$mod} = $tr->{$mod};
+    }
+  }
+}
+
+unless ( eval { ExtUtils::MakeMaker->VERSION(6.56) } ) {
+  my $br = delete $WriteMakefileArgs{BUILD_REQUIRES};
+  my $pp = $WriteMakefileArgs{PREREQ_PM};
+  for my $mod ( keys %$br ) {
+    if ( exists $pp->{$mod} ) {
+      $pp->{$mod} = $br->{$mod} if $br->{$mod} > $pp->{$mod};
+    }
+    else {
+      $pp->{$mod} = $br->{$mod};
+    }
+  }
+}
+
+delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
+  unless eval { ExtUtils::MakeMaker->VERSION(6.52) };
+
+WriteMakefile(%WriteMakefileArgs);
+
+
+
