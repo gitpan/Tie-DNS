@@ -22,6 +22,7 @@ my %WriteMakefileArgs = (
   "PREREQ_PM" => {
     "Carp" => 0,
     "Net::DNS" => 0,
+    "Socket" => 0,
     "Tie::Cache" => 0,
     "strict" => 0,
     "warnings" => 0
@@ -36,7 +37,7 @@ my %WriteMakefileArgs = (
     "Test::PerlTidy" => 0,
     "lib" => 0
   },
-  "VERSION" => "1.132260",
+  "VERSION" => "1.133260",
   "test" => {
     "TESTS" => "t/*.t"
   }
